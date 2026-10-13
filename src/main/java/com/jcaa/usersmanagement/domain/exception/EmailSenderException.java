@@ -5,6 +5,8 @@ public final class EmailSenderException extends DomainException {
   private static final String DEFAULT_MESSAGE = "La notificación por correo no pudo ser enviada.";
   private static final String API_MESSAGE_WITH_DETAIL =
       "No se pudo enviar el correo a '%s' mediante la API de Brevo: %s";
+  private static final String PUBLISH_MESSAGE =
+      "No se pudo publicar la notificacion para '%s' en el topico de Kafka '%s'.";
 
   public EmailSenderException(final String message) {
     super(message);
@@ -21,5 +23,10 @@ public final class EmailSenderException extends DomainException {
   public static EmailSenderException becauseApiFailed(
       final String destinationEmail, final String detail) {
     return new EmailSenderException(String.format(API_MESSAGE_WITH_DETAIL, destinationEmail, detail));
+  }
+
+  public static EmailSenderException becausePublishFailed(
+      final String destinationEmail, final String topic, final Throwable cause) {
+    return new EmailSenderException(String.format(PUBLISH_MESSAGE, destinationEmail, topic), cause);
   }
 }

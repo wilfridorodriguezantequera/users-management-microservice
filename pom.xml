@@ -21,7 +21,6 @@
     <!-- Versiones de dependencias no gestionadas por el BOM de Spring Boot -->
     <lombok.version>1.18.36</lombok.version>
     <mysql.connector.version>9.3.0</mysql.connector.version>
-    <resilience4j.version>2.2.0</resilience4j.version>
     <bcrypt.version>0.10.2</bcrypt.version>
     <jjwt.version>0.13.0</jjwt.version>
     <!-- Declarativas: Mockito y Jacoco siguen siendo explícitas para tener control -->
@@ -78,16 +77,10 @@
       <version>${mysql.connector.version}</version>
     </dependency>
 
-    <!-- Resiliencia para el cliente HTTP de Brevo -->
+    <!-- Kafka: users publica en el topico 'notificaciones' los correos que enviara notifiers -->
     <dependency>
-      <groupId>io.github.resilience4j</groupId>
-      <artifactId>resilience4j-retry</artifactId>
-      <version>${resilience4j.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>io.github.resilience4j</groupId>
-      <artifactId>resilience4j-circuitbreaker</artifactId>
-      <version>${resilience4j.version}</version>
+      <groupId>org.springframework.kafka</groupId>
+      <artifactId>spring-kafka</artifactId>
     </dependency>
 
     <!-- BCrypt para hashing de contraseñas -->
