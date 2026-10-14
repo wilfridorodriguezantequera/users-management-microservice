@@ -4,6 +4,7 @@ import com.jcaa.usersmanagement.application.port.in.CreateUserUseCase;
 import com.jcaa.usersmanagement.application.port.out.CreateAccountPort;
 import com.jcaa.usersmanagement.application.port.out.GetUserByEmailPort;
 import com.jcaa.usersmanagement.application.port.out.SaveUserPort;
+import com.jcaa.usersmanagement.application.port.out.UpdateUserPort;
 import com.jcaa.usersmanagement.application.service.dto.command.CreateUserCommand;
 import com.jcaa.usersmanagement.application.service.mapper.UserApplicationMapper;
 import com.jcaa.usersmanagement.domain.exception.AccountCreationException;
@@ -25,12 +26,15 @@ import jakarta.validation.ConstraintViolation;
 public class CreateUserService implements CreateUserUseCase {
 
   private static final String LOG_ACCOUNT_FAILED =
-      "[CreateUserService] el usuario {} fue creado, pero su cuenta no: {}";
+      "[CreateUserService] el usuario {} queda en PENDING porque su cuenta no se pudo crear: {}";
+  private static final String LOG_USER_ACTIVATED =
+      "[CreateUserService] cuenta creada: el usuario {} pasa de PENDING a ACTIVE.";
 
   private final SaveUserPort saveUserPort;
   private final GetUserByEmailPort getUserByEmailPort;
   private final EmailNotificationService emailNotificationService;
   private final CreateAccountPort createAccountPort;
+  private final UpdateUserPort updateUserPort;
   private final Validator validator;
 
   @Override
@@ -47,21 +51,24 @@ public class CreateUserService implements CreateUserUseCase {
     emailNotificationService.notifyUserCreated(savedUser, command.password());
 
     // Paso 5 (sync): pide al microservicio accounts que cree la cuenta del usuario nuevo.
-    requestAccountCreation(savedUser);
-
-    return savedUser;
+    return createAccountAndActivate(savedUser);
   }
 
   /**
-   * Si accounts falla, el usuario ya quedo guardado: se registra el error en el log en vez de
-   * responder 500, porque eso haria creer que el usuario no se creo.
+   * El usuario se guarda en PENDING. Si accounts crea la cuenta, pasa a ACTIVE. Si accounts falla
+   * (despues de los reintentos del adaptador), el usuario ya quedo guardado y se queda en PENDING:
+   * se registra el error en vez de responder 500, porque eso haria creer que el usuario no existe.
    */
-  private void requestAccountCreation(final UserModel user) {
+  private UserModel createAccountAndActivate(final UserModel user) {
     try {
       createAccountPort.createAccount(user);
     } catch (final AccountCreationException exception) {
       log.warn(LOG_ACCOUNT_FAILED, user.getId().value(), exception.getMessage(), exception);
+      return user;
     }
+    final UserModel activeUser = updateUserPort.update(user.activate());
+    log.info(LOG_USER_ACTIVATED, user.getId().value());
+    return activeUser;
   }
 
   private void validateCommand(final CreateUserCommand command) {

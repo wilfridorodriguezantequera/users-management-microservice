@@ -62,9 +62,12 @@ microservicios (users, accounts y notifiers):
   publica en el topico `notificaciones` un mensaje JSON con el formato acordado:
   `{ "email", "nombre", "asunto", "mensaje" }`. El microservicio notifiers lo lee y lo
   envia con Brevo. La publicacion se hace fuera del hilo HTTP (`notificationExecutor`).
-- **Paso 5 (sync):** al crear un usuario, `AccountsRestClientAdapter` llama a
-  `POST {ACCOUNTS_URL}/api/accounts` con `{ "userId", "email", "nombre" }`. Si accounts
-  falla, el usuario igual queda creado y el error se registra en el log.
+- **Paso 5 (sync):** al crear un usuario (estado `PENDING`), `AccountsRestClientAdapter`
+  llama a `POST {ACCOUNTS_URL}/api/accounts` con `{ "userId", "email", "nombre" }`.
+  - Si accounts crea la cuenta (2xx, o 409 si ya existia), el usuario pasa a **`ACTIVE`**.
+  - Resiliencia con Resilience4j: **timeout** por intento, **retry** con backoff exponencial
+    (errores de red, 5xx, 408, 429) y **circuit breaker**. Si todo falla (**fallback**), el
+    usuario se queda en `PENDING` y el error se registra en el log.
 
 | Variable | Ejemplo / valor |
 |---|---|
@@ -75,3 +78,5 @@ microservicios (users, accounts y notifiers):
 | `KAFKA_USERNAME` / `KAFKA_PASSWORD` | usuario y contrasena SASL de Aiven |
 | `KAFKA_CA_CERT` | contenido completo de `ca.pem` (incluye las lineas BEGIN/END) |
 | `ACCOUNTS_URL` | `https://accounts-xxxx.onrender.com` |
+| `ACCOUNTS_READ_TIMEOUT` | opcional, `30s` por intento |
+| `ACCOUNTS_RETRY_*` / `ACCOUNTS_CIRCUIT_*` | opcionales, ver `application.properties` |

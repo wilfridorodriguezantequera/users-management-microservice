@@ -7,6 +7,7 @@ import static org.mockito.Mockito.*;
 import com.jcaa.usersmanagement.application.port.out.CreateAccountPort;
 import com.jcaa.usersmanagement.application.port.out.GetUserByEmailPort;
 import com.jcaa.usersmanagement.application.port.out.SaveUserPort;
+import com.jcaa.usersmanagement.application.port.out.UpdateUserPort;
 import com.jcaa.usersmanagement.application.service.dto.command.CreateUserCommand;
 import com.jcaa.usersmanagement.domain.enums.UserRole;
 import com.jcaa.usersmanagement.domain.enums.UserStatus;
@@ -41,6 +42,7 @@ class CreateUserServiceTest {
   @Mock private GetUserByEmailPort getUserByEmailPort;
   @Mock private EmailNotificationService emailNotificationService;
   @Mock private CreateAccountPort createAccountPort;
+  @Mock private UpdateUserPort updateUserPort;
 
   private CreateUserService service;
 
@@ -53,6 +55,7 @@ class CreateUserServiceTest {
               getUserByEmailPort,
               emailNotificationService,
               createAccountPort,
+              updateUserPort,
               validatorFactory.getValidator());
     }
   }
@@ -77,6 +80,7 @@ class CreateUserServiceTest {
 
     when(getUserByEmailPort.getByEmail(any())).thenReturn(Optional.empty());
     when(saveUserPort.save(any())).thenReturn(savedUser);
+    when(updateUserPort.update(savedUser.activate())).thenReturn(savedUser.activate());
 
     // Act
     final UserModel result = service.execute(command);
@@ -85,17 +89,19 @@ class CreateUserServiceTest {
     assertAll(
         "flujo feliz de CreateUserService",
         () -> assertNotNull(result, "resultado no debe ser null"),
-        () -> assertEquals("u-01", result.getId().value(), "id del usuario guardado"));
+        () -> assertEquals("u-01", result.getId().value(), "id del usuario guardado"),
+        () -> assertEquals(UserStatus.ACTIVE, result.getStatus(), "pasa a ACTIVE con cuenta"));
 
     verify(saveUserPort).save(any(UserModel.class));
     verify(emailNotificationService).notifyUserCreated(savedUser, "Pass1234");
     verify(createAccountPort).createAccount(savedUser);
+    verify(updateUserPort).update(savedUser.activate());
   }
 
   // ── accounts no disponible
 
   @Test
-  @DisplayName("execute() devuelve el usuario creado aunque accounts falle")
+  @DisplayName("execute() devuelve el usuario en PENDING si accounts falla")
   void shouldReturnSavedUserWhenAccountCreationFails() {
     // Arrange
     final CreateUserCommand command =
@@ -121,7 +127,9 @@ class CreateUserServiceTest {
 
     // Assert
     assertEquals("u-03", result.getId().value());
+    assertEquals(UserStatus.PENDING, result.getStatus(), "sin cuenta se queda en PENDING");
     verify(emailNotificationService).notifyUserCreated(savedUser, "Pass1234");
+    verify(updateUserPort, never()).update(any());
   }
 
   // ── email duplicado
@@ -164,6 +172,10 @@ class CreateUserServiceTest {
     // Act & Assert
     assertThrows(ConstraintViolationException.class, () -> service.execute(command));
     verifyNoInteractions(
-        saveUserPort, getUserByEmailPort, emailNotificationService, createAccountPort);
+        saveUserPort,
+        getUserByEmailPort,
+        emailNotificationService,
+        createAccountPort,
+        updateUserPort);
   }
 }
