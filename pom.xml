@@ -22,6 +22,8 @@
     <lombok.version>1.18.36</lombok.version>
     <mysql.connector.version>9.3.0</mysql.connector.version>
     <resilience4j.version>2.2.0</resilience4j.version>
+    <!-- 2.29.x: las versiones 2.30+ mandan checksums nuevos que Backblaze B2 puede rechazar -->
+    <aws.sdk.version>2.29.0</aws.sdk.version>
     <bcrypt.version>0.10.2</bcrypt.version>
     <jjwt.version>0.13.0</jjwt.version>
     <!-- Declarativas: Mockito y Jacoco siguen siendo explícitas para tener control -->
@@ -85,6 +87,19 @@
     </dependency>
 
     <!-- Resiliencia (retry + circuit breaker) para la llamada sincrona a accounts -->
+    <!-- Guia 9: Backblaze B2 con la API compatible con S3 (AWS SDK v2) -->
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>s3</artifactId>
+      <version>${aws.sdk.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>software.amazon.awssdk</groupId>
+          <artifactId>netty-nio-client</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
     <dependency>
       <groupId>io.github.resilience4j</groupId>
       <artifactId>resilience4j-retry</artifactId>

@@ -80,3 +80,19 @@ microservicios (users, accounts y notifiers):
 | `ACCOUNTS_URL` | `https://accounts-xxxx.onrender.com` |
 | `ACCOUNTS_READ_TIMEOUT` | opcional, `30s` por intento |
 | `ACCOUNTS_RETRY_*` / `ACCOUNTS_CIRCUIT_*` | opcionales, ver `application.properties` |
+
+## Guia 9: archivos de usuario en Backblaze B2
+
+Bucket privado `electiva-users-files` (cifrado SSE-B2, ciclo de vida "Keep only the last version").
+Los archivos se guardan en `user/{id}/{anio}/{mes}/{dia}/{archivo}` usando la API compatible con S3
+(AWS SDK v2, `S3Client` con `endpointOverride`).
+
+| Metodo | Ruta | Que hace |
+|---|---|---|
+| POST | `/api/users/{id}/files` (multipart, campo `file`) | Sube un archivo |
+| GET | `/api/users/{id}/files` | Lista los archivos del usuario |
+| GET | `/api/users/{id}/files/download?key=...` | Descarga un archivo |
+| DELETE | `/api/users/{id}/files?key=...` | Elimina un archivo |
+
+Requieren token JWT del mismo usuario o de un ADMIN. Variables: `B2_ENDPOINT`, `B2_REGION`,
+`B2_BUCKET`, `B2_KEY_ID`, `B2_APPLICATION_KEY` (en local: `b2.*` en `.environments/application-secrets.properties`).

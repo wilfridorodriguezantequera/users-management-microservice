@@ -2,12 +2,18 @@ package com.jcaa.usersmanagement.infrastructure.entrypoint.rest.advice;
 
 import com.jcaa.usersmanagement.domain.exception.DomainException;
 import com.jcaa.usersmanagement.domain.exception.InvalidCredentialsException;
+import com.jcaa.usersmanagement.domain.exception.StoredFileNotFoundException;
 import com.jcaa.usersmanagement.domain.exception.UserAlreadyExistsException;
 import com.jcaa.usersmanagement.domain.exception.UserNotFoundException;
 import com.jcaa.usersmanagement.infrastructure.adapter.persistence.exception.PersistenceException;
+import com.jcaa.usersmanagement.infrastructure.adapter.storage.b2.FileStorageException;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.rest.dto.response.ApiErrorResponse;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -22,6 +28,40 @@ public class GlobalExceptionHandler {
   @ResponseStatus(HttpStatus.NOT_FOUND)
   public ApiErrorResponse handleUserNotFound(final UserNotFoundException exception) {
     return new ApiErrorResponse(HttpStatus.NOT_FOUND.value(), exception.getMessage());
+  }
+
+  @ExceptionHandler(StoredFileNotFoundException.class)
+  @ResponseStatus(HttpStatus.NOT_FOUND)
+  public ApiErrorResponse handleStoredFileNotFound(final StoredFileNotFoundException exception) {
+    return new ApiErrorResponse(HttpStatus.NOT_FOUND.value(), exception.getMessage());
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  @ResponseStatus(HttpStatus.FORBIDDEN)
+  public ApiErrorResponse handleAccessDenied(final AccessDeniedException exception) {
+    return new ApiErrorResponse(HttpStatus.FORBIDDEN.value(), exception.getMessage());
+  }
+
+  @ExceptionHandler(MaxUploadSizeExceededException.class)
+  @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
+  public ApiErrorResponse handleMaxUploadSize(final MaxUploadSizeExceededException ignored) {
+    return new ApiErrorResponse(
+        HttpStatus.PAYLOAD_TOO_LARGE.value(), "El archivo supera el tamano maximo permitido.");
+  }
+
+  @ExceptionHandler({
+    MissingServletRequestPartException.class,
+    MissingServletRequestParameterException.class
+  })
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ApiErrorResponse handleMissingPart(final Exception exception) {
+    return new ApiErrorResponse(HttpStatus.BAD_REQUEST.value(), exception.getMessage());
+  }
+
+  @ExceptionHandler(FileStorageException.class)
+  @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+  public ApiErrorResponse handleFileStorage(final FileStorageException exception) {
+    return new ApiErrorResponse(HttpStatus.SERVICE_UNAVAILABLE.value(), exception.getMessage());
   }
 
   @ExceptionHandler(UserAlreadyExistsException.class)

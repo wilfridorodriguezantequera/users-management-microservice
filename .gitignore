@@ -45,3 +45,4 @@ build/
 # Secretos locales. Nunca deben versionarse.
 /.environments/
 /.env
+/application-secrets.properties

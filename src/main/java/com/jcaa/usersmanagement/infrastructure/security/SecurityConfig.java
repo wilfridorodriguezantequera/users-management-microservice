@@ -16,6 +16,8 @@ public class SecurityConfig {
   private static final String AUTH_LOGIN_PATH = "/api/auth/login";
   private static final String USERS_PATH = "/api/users";
   private static final String USERS_DETAIL_PATH = "/api/users/**";
+  // Guia 9: el dueno o un ADMIN (se valida en UserFileRestController)
+  private static final String[] USER_FILES_PATHS = {"/api/users/*/files", "/api/users/*/files/**"};
   private static final String[] OPEN_API_PATHS = {
     "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**"
   };
@@ -44,6 +46,8 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(OPEN_API_PATHS)
                     .permitAll()
+                    .requestMatchers(USER_FILES_PATHS)
+                    .authenticated()
                     .requestMatchers(HttpMethod.POST, USERS_PATH)
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, USERS_PATH, USERS_DETAIL_PATH)

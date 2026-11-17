@@ -41,6 +41,11 @@ services:
       KAFKA_USERNAME: ${KAFKA_USERNAME:-}
       KAFKA_PASSWORD: ${KAFKA_PASSWORD:-}
       KAFKA_CA_CERT: ${KAFKA_CA_CERT:-}
+      B2_ENDPOINT: ${B2_ENDPOINT:-https://s3.us-east-005.backblazeb2.com}
+      B2_REGION: ${B2_REGION:-us-east-005}
+      B2_BUCKET: ${B2_BUCKET:-electiva-users-files}
+      B2_KEY_ID: ${B2_KEY_ID:?Defina B2_KEY_ID en el archivo .env local}
+      B2_APPLICATION_KEY: ${B2_APPLICATION_KEY:?Defina B2_APPLICATION_KEY en el archivo .env local}
       ACCOUNTS_URL: ${ACCOUNTS_URL:?Defina ACCOUNTS_URL en el archivo .env local}
       JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET en el archivo .env local}
       JWT_EXPIRATION_SECONDS: ${JWT_EXPIRATION_SECONDS:-900}
